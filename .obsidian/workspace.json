@@ -1,0 +1,218 @@
+{
+  "main": {
+    "id": "c3b4cf0c5b37e48d",
+    "type": "split",
+    "children": [
+      {
+        "id": "e155638bac4e26be",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "85e0bd153fd87a5d",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Visualização em gráfico"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "96bc697ffcca80d6",
+    "type": "split",
+    "children": [
+      {
+        "id": "67dc8f91d24063c1",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ce38ce3e2eca61f8",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de arquivos"
+            }
+          },
+          {
+            "id": "05e731fd64fa963d",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Procurar"
+            }
+          },
+          {
+            "id": "fe5a15e8cc099644",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "76ee66fa70f7d947",
+    "type": "split",
+    "children": [
+      {
+        "id": "1d700775aec88637",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "8b95290991b523db",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Links inversos"
+            }
+          },
+          {
+            "id": "764d89b66170ed2b",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Links de saída"
+            }
+          },
+          {
+            "id": "7c82960bf2c79115",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "fb76e60f87a21dff",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas as propriedades"
+            }
+          },
+          {
+            "id": "8d69d9d0ba800e41",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Sumário"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir a troca rápida": false,
+      "graph:Abrir visualização em gráfico": false,
+      "canvas:Criar novo canvas": false,
+      "daily-notes:Abrir a nota de hoje": false,
+      "templates:Inserir modelo": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Criar nova base": false
+    }
+  },
+  "active": "85e0bd153fd87a5d",
+  "lastOpenFiles": [
+    "03 - Roadmap.md.tmp.29040.d4e97b5c852d",
+    "Diario/2026-06-09 - Paywall Feed e Asaas.md",
+    "Diario/2026-06-09 - Paywall Feed e Asaas.md.tmp.29040.985045569f79",
+    "Sprints/Sprint 09 - Renda Fixa.md.tmp.29040.846c830d7ca6",
+    "Sprints/Sprint 09 - Renda Fixa.md.tmp.29040.59a431a507ad",
+    "Sprints/Sprint 09 - Renda Fixa.md.tmp.29040.2ec92a16535a",
+    "Sprints/Sprint 09 - Renda Fixa.md.tmp.29040.30c22f40ac44",
+    "03 - Roadmap.md.tmp.29040.d6e876c64c4b",
+    "03 - Roadmap.md.tmp.29040.145a5df57ceb",
+    "Sprints/Sprint 09 - Renda Fixa.md",
+    "Sprints/Sprint 09 - Renda Fixa.md.tmp.29040.2c6ccc4cf08c",
+    "Diario/2026-06-09 - Modulo Renda Fixa.md",
+    "Diario/2026-06-09 - Modulo Renda Fixa.md.tmp.29040.e5cd26df4a29",
+    "Diario/2026-06-08 - Feed teste visual e wiring WhatsApp.md.tmp.29040.968138f7afcb",
+    "Diario/2026-06-08 - Feed teste visual e wiring WhatsApp.md",
+    "Sprints/Sprint 08 - Feed de Relatorios de Corretoras.md",
+    "Diario/2026-05-29 - Feed de Relatorios de Corretoras.md",
+    "Diario/2026-05-27 - Inteligencia Historica MM200.md",
+    "Diario/2026-05-27 - Grafico interativo Lightweight Charts.md",
+    "Diario/2026-05-26 - Analise IA real (estrutura + fallback).md",
+    "Diario/2026-05-26 - Frente A telas mock ligadas.md",
+    "Diario/2026-05-26 - Sprint 07B Cron e Email de Alertas.md",
+    "Diario/2026-05-21 - Sprint 07A e 07C Alerts e Paywall.md",
+    "Diario/2026-05-21 - Sprint 3.5 Grafico Historico concluido.md",
+    "Diario/2026-05-21 - Sprint 06 Compare concluido.md",
+    "Diario/2026-05-21 - Sprint 05 Rankings concluido.md",
+    "Diario/2026-05-21 - Sprint 04 Watchlist concluido.md",
+    "Diario/2026-05-21 - Botao atualizar dados.md",
+    "Diario/2026-05-20 - Sprint 03 Stock Detail concluido.md",
+    "Diario/2026-05-20 - Sprint 02 Screener concluido.md",
+    "Diario/2026-05-20 - Sprint 01 Hardening concluido.md",
+    "Decisoes/2026-05-20 - Mercados e IA.md",
+    "Decisoes/2026-05-20 - Modelo de Monetizacao.md",
+    "Diario/2026-05-20 - Setup inicial e mapeamento.md",
+    "Sprints/Sprint 07 - Alerts e Paywall.md",
+    "Sprints/Sprint 06 - Compare.md"
+  ]
+}
