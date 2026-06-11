@@ -43,8 +43,13 @@ Semana 5+    [Sprint 07 cont. — Alerts + Paywall]
 - [x] Sprint 08 — Feed de Relatórios: **CONCLUÍDO end-to-end em 2026-06-08** (WhatsApp → PDF → Claude → feed funcionando; 3 PDFs reais processados). App + ConsensusWidget testados.
 - 🟢 Sprint 09 — Renda Fixa (BR + Internacional): **código completo em 2026-06-09** (BCB+FRED reais, comparador c/ IR+câmbio, calculadora, curva, advisor IA, 4 tabs). 🟡 falta validação visual + câmbio/US no app real. Tesouro Direto bloqueado (Cloudflare) → produtos via BCB.
 
+## Deploy
+
+- 🟢 **Railway (produção) — NO AR (2026-06-11)** ✅ App publicado e funcional: auth, screener, rankings, stock+gráficos (US ao vivo Twelve Data / B3 cache+brapi), dados (671 ações), billing/Asaas+webhook, **cron de alertas (GitHub Actions)**. Branch `dev`, commit `28bac920`. **Falta**: worker WhatsApp + sync agendado (mantém B3 fresco + completa ~38) + (opcional) Resend domain + magic-link. Handoff completo + env vars + como continuar em outra máquina: [[Deploy - Railway (Producao)]]
+
 ## Backlog (depois do MVP)
 
+- **Suitability / Perfil de Investidor no cadastro** (enriquecer o Passo 4) — questionário de 13 perguntas → Conservador/Moderado/Arrojado. Ver [[Backlog - Suitability (Passo 4 do Cadastro)]]
 - Importar carteira do investidor (CSV B3, integração com corretora)
 - Backtest de estratégias
 - Notificações in-app (não só email)
