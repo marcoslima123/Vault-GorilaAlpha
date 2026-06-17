@@ -53,7 +53,7 @@ Semana 5+    [Sprint 07 cont. — Alerts + Paywall]
 - Importar carteira do investidor (CSV B3, integração com corretora)
 - Backtest de estratégias
 - Notificações in-app (não só email)
-- Dashboard mobile-first (PWA está no monorepo mas vazio)
+- Dashboard mobile-first (PWA: **fundação criada em 2026-06-09** — shell, navegação, sessão via proxy `/api`, `@gorila/core`; telas via Figma a seguir. Ver [[Diario/2026-06-09 - Fundacao PWA Mobile]])
 - Análise IA mais profunda (já tem `@anthropic-ai/sdk`)
 - Internacionalização (UserPreferences.locale já existe)
 - Compartilhamento público de watchlist/análise

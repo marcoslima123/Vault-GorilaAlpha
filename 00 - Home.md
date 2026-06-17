@@ -40,6 +40,13 @@ Vault Obsidian para mapear o progresso do projeto **GorilaAlpha** (web app de an
 - [[Diario/2026-05-26 - Analise IA real (estrutura + fallback)]]
 - [[Diario/2026-05-27 - Grafico interativo Lightweight Charts]]
 - [[Diario/2026-05-27 - Inteligencia Historica MM200]]
+- [[Diario/2026-05-29 - Feed de Relatorios de Corretoras]]
+- [[Diario/2026-06-08 - Feed teste visual e wiring WhatsApp]]
+- [[Diario/2026-06-09 - Modulo Renda Fixa]]
+- [[Diario/2026-06-09 - Paywall Feed e Asaas]]
+- [[Diario/2026-06-09 - Fundacao PWA Mobile]]
+- [[Diario/2026-06-17 - PWA em producao, brapi PRO e incidente de disco]]
+- [[Diario/2026-06-17 - brapi PRO 100% (token morto, graficos, MM200, Balanco)]]
 
 ## Localização do código
 

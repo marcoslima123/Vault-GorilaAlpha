@@ -4,7 +4,32 @@
 
 ---
 
-## 🟢 HANDOFF — Estado atual (2026-06-11)
+## 🟢 HANDOFF — Estado atual (2026-06-17)
+
+**Web + PWA no ar.** Repo `marcoslima123/gorilaAlpha-web`, branch **`dev`**. Detalhes da sessão: [[Diario/2026-06-17 - PWA em producao, brapi PRO e incidente de disco]].
+
+### Serviços na Railway (agora 3)
+1. **Postgres** — ⚠️ volume era **500 MB** e **encheu** (cache de cotações 5y); resize feito pra **20 GB** (Live resize, cobra só por uso). Plano **Pro**.
+2. **web** (Next.js) — backend + desktop + SSE. `proxy.ts` detecta **mobile (UA) → 307 pra PWA** (bots ficam no web; escape `?view=web`).
+3. **gorila-mobile** (PWA) — app mobile. **Config-as-code = `railway.pwa.json`** (usa `Dockerfile.pwa`), Root Directory vazio. Proxia `/api` pro web via **route handler runtime** (`apps/pwa/src/app/api/[...path]/route.ts`, lê `WEB_INTERNAL_URL`). Var `WEB_INTERNAL_URL` = URL pública do web. No web: `PWA_URL` = URL pública do PWA.
+
+### Dados de mercado — brapi PRO (atualizado 2026-06-17)
+- **brapi PRO assinado** (~R$117/mês). Web service: `BRAPI_TOKEN` + `BRAPI_HISTORY_RANGE=5y`. ⚠️ **Token PRO atual: `rpeGNpgbvm9Ugax8bDPedT`** — o antigo (`tMihVTBkEq...`) estava INVÁLIDO/INATIVO e causava 502, Balanço vazio e gráfico de 3 meses. **As DUAS variáveis precisam estar no serviço web.**
+- **B3/BDR = brapi PRO é a ÚNICA fonte** (preço, intraday, histórico 5y, fundamentos). Yahoo foi **removido** desse caminho (só fazia barulho).
+- **US**: gráfico via Twelve Data; **fundamentos via Yahoo** (brapi PRO NÃO dá fundamentos de US — só preço/gráfico). Yahoo é bloqueado na Railway → fundamentos US só sincronizam rodando `seed.ts US` do PC.
+- Detalhes completos da sessão: [[Diario/2026-06-17 - brapi PRO 100% (token morto, graficos, MM200, Balanco)]].
+- **Não precisa mais** do warm-charts-do-PC pra B3 (brapi PRO funciona no IP da Railway). Sync dos fundamentos: 647 ações com P/L. O token free FOI DESATIVADO ao assinar o PRO.
+- ⚠️ Cache `stock_price_history` a 5y é pesado (~310MB cheio); o churn (delete+reinsert por refresh) é ineficiente — de olho no disco.
+
+### Feed (WhatsApp) — deploy pronto, falta setup
+- `Dockerfile.whatsapp` + `railway.whatsapp.json` commitados. Criar serviço **`gorila-whatsapp`** (config `railway.whatsapp.json`, **volume em `/data`**, `WHATSAPP_SESSION_PATH=/data/whatsapp-session`, `NEXT_PUBLIC_APP_URL`=web, `REPORTS_PROCESS_SECRET`). No web: `ANTHROPIC_API_KEY` + `REPORTS_PROCESS_SECRET`. 1º deploy: QR nos logs → escanear com **número dedicado** (Baileys = risco de ban). Feed atual populado com **seed manual** (10 relatórios).
+
+### Atenção ao deployar
+- Cada commit redeploya os serviços do mesmo repo. **Mudança no `apps/pwa` → confirmar no serviço `gorila-mobile`** (não no web). Ex: o fix do gráfico (`7edc156`) é PWA.
+
+---
+
+## HANDOFF anterior (2026-06-11) — histórico
 
 **O APP ESTÁ NO AR e funcional em produção na Railway.** Repo: `marcoslima123/gorilaAlpha-web`, branch **`dev`** (é o default), último commit **`28bac920`**.
 
