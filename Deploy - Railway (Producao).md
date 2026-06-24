@@ -21,11 +21,19 @@
 - **Não precisa mais** do warm-charts-do-PC pra B3 (brapi PRO funciona no IP da Railway). Sync dos fundamentos: 647 ações com P/L. O token free FOI DESATIVADO ao assinar o PRO.
 - ⚠️ Cache `stock_price_history` a 5y é pesado (~310MB cheio); o churn (delete+reinsert por refresh) é ineficiente — de olho no disco.
 
-### Feed (WhatsApp) — deploy pronto, falta setup
-- `Dockerfile.whatsapp` + `railway.whatsapp.json` commitados. Criar serviço **`gorila-whatsapp`** (config `railway.whatsapp.json`, **volume em `/data`**, `WHATSAPP_SESSION_PATH=/data/whatsapp-session`, `NEXT_PUBLIC_APP_URL`=web, `REPORTS_PROCESS_SECRET`). No web: `ANTHROPIC_API_KEY` + `REPORTS_PROCESS_SECRET`. 1º deploy: QR nos logs → escanear com **número dedicado** (Baileys = risco de ban). Feed atual populado com **seed manual** (10 relatórios).
+### Feed (WhatsApp) — 🟢 NO AR (2026-06-18)
+4º serviço **`gorila-whatsapp`** rodando 24/7; relatórios das corretoras caem no Feed automaticamente. Setup: config `railway.whatsapp.json`, **volume em `/data`** (cria pelo canvas → Attach Volume, não em Settings), `WHATSAPP_SESSION_PATH=/data/whatsapp-session`, `WHATSAPP_PAIRING_NUMBER`=número dedicado (5534992013939), `WHATSAPP_GROUP_IDS=120363317359033134@g.us`, `WHATSAPP_HISTORY_LIMIT=0` (backfill desligado — `syncFullHistory` causa loop de 408), `NEXT_PUBLIC_APP_URL`=web, `REPORTS_PROCESS_SECRET`. No web: `ANTHROPIC_API_KEY` + `REPORTS_PROCESS_SECRET` (mesmo). **Parear pelo link `api.qrserver.com` nos logs** (QR ASCII não escaneia). Detalhes e os 3 bugs corrigidos: [[Diario/2026-06-18 - Worker WhatsApp em producao (Feed ao vivo)]].
 
 ### Atenção ao deployar
 - Cada commit redeploya os serviços do mesmo repo. **Mudança no `apps/pwa` → confirmar no serviço `gorila-mobile`** (não no web). Ex: o fix do gráfico (`7edc156`) é PWA.
+- ⚠️ **Worker WhatsApp pode ficar surdo (zombie socket)** — mitigado com watchdog (2026-06-19, commit `cba38c5`); se mesmo assim parar, redeploya o `gorila-whatsapp`. Guarda `WHATSAPP_MAX_PDF_MB` (default 20MB) pula jornais gigantes.
+
+### ⚠️ PENDÊNCIA — migration `full_text` em produção (2026-06-19)
+A migration `20260618120144_add_report_full_text` **não aplicou** no boot (estava marcada como aplicada sem a coluna existir) → Feed caiu inteiro com `P2022`. Coluna criada na mão (`ALTER TABLE "reports" ADD COLUMN IF NOT EXISTS "full_text" TEXT;`). **Falta confirmar** o `_prisma_migrations` pra não travar o próximo deploy (a migration não tem `IF NOT EXISTS`):
+```sql
+SELECT migration_name, finished_at FROM "_prisma_migrations" WHERE migration_name LIKE '%full_text%';
+```
+0 linhas → `prisma migrate resolve --applied 20260618120144_add_report_full_text` contra prod. Detalhe: [[Diario/2026-06-19 - Watchdog WhatsApp, incidente full_text e skeletons]].
 
 ---
 

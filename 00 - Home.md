@@ -47,6 +47,8 @@ Vault Obsidian para mapear o progresso do projeto **GorilaAlpha** (web app de an
 - [[Diario/2026-06-09 - Fundacao PWA Mobile]]
 - [[Diario/2026-06-17 - PWA em producao, brapi PRO e incidente de disco]]
 - [[Diario/2026-06-17 - brapi PRO 100% (token morto, graficos, MM200, Balanco)]]
+- [[Diario/2026-06-18 - Worker WhatsApp em producao (Feed ao vivo)]]
+- [[Diario/2026-06-19 - Watchdog WhatsApp, incidente full_text e skeletons]]
 
 ## Localização do código
 

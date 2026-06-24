@@ -45,7 +45,7 @@ Semana 5+    [Sprint 07 cont. — Alerts + Paywall]
 
 ## Deploy
 
-- 🟢 **Railway (produção) — NO AR (2026-06-11)** ✅ App publicado e funcional: auth, screener, rankings, stock+gráficos (US ao vivo Twelve Data / B3 cache+brapi), dados (671 ações), billing/Asaas+webhook, **cron de alertas (GitHub Actions)**. Branch `dev`, commit `28bac920`. **Falta**: worker WhatsApp + sync agendado (mantém B3 fresco + completa ~38) + (opcional) Resend domain + magic-link. Handoff completo + env vars + como continuar em outra máquina: [[Deploy - Railway (Producao)]]
+- 🟢 **Railway (produção) — NO AR** ✅ App publicado e funcional: auth, screener, rankings, stock+gráficos, billing/Asaas+webhook, cron de alertas (GitHub Actions). **(2026-06-17)** B3/BDR 100% via brapi PRO (preço/intraday/5y/fundamentos), Yahoo só pra US. **(2026-06-18) Worker WhatsApp NO AR** → Feed recebendo relatórios das corretoras ao vivo (4º serviço `gorila-whatsapp`). **Falta (opcional)**: sync agendado (cron na Railway p/ B3/BDR), Resend domain, magic-link. Handoff completo: [[Deploy - Railway (Producao)]]
 
 ## Backlog (depois do MVP)
 
