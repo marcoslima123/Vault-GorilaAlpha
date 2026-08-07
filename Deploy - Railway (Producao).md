@@ -28,12 +28,46 @@
 - Cada commit redeploya os serviços do mesmo repo. **Mudança no `apps/pwa` → confirmar no serviço `gorila-mobile`** (não no web). Ex: o fix do gráfico (`7edc156`) é PWA.
 - ⚠️ **Worker WhatsApp pode ficar surdo (zombie socket)** — mitigado com watchdog (2026-06-19, commit `cba38c5`); se mesmo assim parar, redeploya o `gorila-whatsapp`. Guarda `WHATSAPP_MAX_PDF_MB` (default 20MB) pula jornais gigantes.
 
-### ⚠️ PENDÊNCIA — migration `full_text` em produção (2026-06-19)
-A migration `20260618120144_add_report_full_text` **não aplicou** no boot (estava marcada como aplicada sem a coluna existir) → Feed caiu inteiro com `P2022`. Coluna criada na mão (`ALTER TABLE "reports" ADD COLUMN IF NOT EXISTS "full_text" TEXT;`). **Falta confirmar** o `_prisma_migrations` pra não travar o próximo deploy (a migration não tem `IF NOT EXISTS`):
+### 🔴 BLOQUEIO CONFIRMADO — o próximo deploy NÃO vai subir (verificado em 2026-08-07)
+
+A migration `20260618120144_add_report_full_text` **não está registrada** em `_prisma_migrations`. Consulta rodada contra o banco de prod em 2026-08-07:
+
 ```sql
 SELECT migration_name, finished_at FROM "_prisma_migrations" WHERE migration_name LIKE '%full_text%';
+-- 0 linhas
 ```
-0 linhas → `prisma migrate resolve --applied 20260618120144_add_report_full_text` contra prod. Detalhe: [[Diario/2026-06-19 - Watchdog WhatsApp, incidente full_text e skeletons]].
+
+A coluna `full_text` **existe** (criada na mão em junho) e o SQL da migration **não tem guarda**:
+```sql
+ALTER TABLE "reports" ADD COLUMN     "full_text" TEXT;
+```
+
+→ No boot de qualquer container novo, `prisma migrate deploy` tenta criar a coluna, recebe `column already exists`, e o `&&` do `start:railway` (`prisma migrate deploy && next start`) **impede o `next start`**. O serviço web fica fora do ar.
+
+**Conserto (uma linha, não toca em dado):**
+```
+prisma migrate resolve --applied 20260618120144_add_report_full_text
+```
+
+⚠️ Há **uma migration nova na fila atrás dela** (`20260807195143_add_stock_quote`), ainda não commitada. Resolver a `full_text` **antes** de deployar qualquer coisa.
+
+Histórico do incidente: [[Diario/2026-06-19 - Watchdog WhatsApp, incidente full_text e skeletons]] · confirmação: [[Diario/2026-08-07 - Ambiente local destravado, brapi fora e cotacao separada dos fundamentos]].
+
+### 🔴 Dados de mercado desatualizados em produção (verificado em 2026-08-07)
+
+```
+indicador mais recente:  2026-07-23 22:53  (352h atrás)
+B3/BDR mais recente:     2026-07-23 22:53
+US mais recente:         2026-06-17 20:12
+último sync log:         2026-06-17 20:15
+```
+
+Produção serve **preços de ~15 dias** (B3/BDR) e ~7 semanas (US), **em silêncio** — quando o provedor falha, a rota cai em `cache-stale` e devolve o preço velho com um `warning` que a UI nunca mostrou. Causas somadas: **não existe sync agendado** (pendente desde junho) e a **brapi ficou fora do ar** por horas em 07/08 (site no ar, `/api/*` em timeout; voltou depois).
+
+Mitigações implementadas (ainda **não deployadas**) no item 6 de [[Diario/2026-08-07 - Ambiente local destravado, brapi fora e cotacao separada dos fundamentos]]: cotação com caminho e TTL próprios, e idade do dado visível na tela.
+
+### ⚠️ Segurança — rotacionar credencial do Postgres
+A `DATABASE_PUBLIC_URL` de produção circulou em texto plano em 2026-08-07. Considerar rotacionar em Railway → Postgres → Variables.
 
 ---
 

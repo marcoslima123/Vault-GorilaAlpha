@@ -49,6 +49,7 @@ Vault Obsidian para mapear o progresso do projeto **GorilaAlpha** (web app de an
 - [[Diario/2026-06-17 - brapi PRO 100% (token morto, graficos, MM200, Balanco)]]
 - [[Diario/2026-06-18 - Worker WhatsApp em producao (Feed ao vivo)]]
 - [[Diario/2026-06-19 - Watchdog WhatsApp, incidente full_text e skeletons]]
+- [[Diario/2026-08-07 - Ambiente local destravado, brapi fora e cotacao separada dos fundamentos]] ⚠️ **pendência que trava o próximo deploy**
 
 ## Localização do código
 
@@ -75,6 +76,14 @@ docker compose up -d
 ```
 
 - Web: http://localhost:3000
-- PWA: http://localhost:3001 (precisa expor a porta no compose)
+- PWA: http://localhost:3001
 - Swagger: http://localhost:3000/api/docs
 - Postgres: localhost:5433 (user: gorila, pass: gorila, db: gorila_alpha)
+
+> ⚠️ **Feature funciona em prod mas "some" no local?** É o **volume anônimo de `node_modules`**, que sobrevive a `up -d` e a `restart` e tem precedência sobre a imagem — carrega Prisma Client de schema antigo e dependências faltando. Rebuildar **não** resolve:
+> ```powershell
+> docker compose up -d --force-recreate --renew-anon-volumes app
+> ```
+> Detalhe do diagnóstico completo em [[Diario/2026-08-07 - Ambiente local destravado, brapi fora e cotacao separada dos fundamentos]].
+
+> Se o banco local estiver atrás do schema, rodar `npx prisma migrate deploy` dentro do container (`apps/web`).

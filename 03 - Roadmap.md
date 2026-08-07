@@ -43,6 +43,12 @@ Semana 5+    [Sprint 07 cont. — Alerts + Paywall]
 - [x] Sprint 08 — Feed de Relatórios: **CONCLUÍDO end-to-end em 2026-06-08** (WhatsApp → PDF → Claude → feed funcionando; 3 PDFs reais processados). App + ConsensusWidget testados.
 - 🟢 Sprint 09 — Renda Fixa (BR + Internacional): **código completo em 2026-06-09** (BCB+FRED reais, comparador c/ IR+câmbio, calculadora, curva, advisor IA, 4 tabs). 🟡 falta validação visual + câmbio/US no app real. Tesouro Direto bloqueado (Cloudflare) → produtos via BCB.
 
+## 🔴 Bloqueios abertos (2026-08-07)
+
+1. **O próximo deploy não sobe** — migration `full_text` não registrada no `_prisma_migrations` de prod (confirmado por consulta). Rodar `prisma migrate resolve --applied 20260618120144_add_report_full_text` **antes** de deployar. Ver [[Deploy - Railway (Producao)]].
+2. **Preços desatualizados em produção** — B3/BDR de 23/07, US de 17/06, servidos em silêncio via `cache-stale`. Falta **sync agendado** (pendente desde junho).
+3. **Trabalho não commitado** — 3 mudanças de cotação + ScoreRing (do `reset --soft` do commit `9519646b`, cuja mensagem não batia com o conteúdo).
+
 ## Deploy
 
 - 🟢 **Railway (produção) — NO AR** ✅ App publicado e funcional: auth, screener, rankings, stock+gráficos, billing/Asaas+webhook, cron de alertas (GitHub Actions). **(2026-06-17)** B3/BDR 100% via brapi PRO (preço/intraday/5y/fundamentos), Yahoo só pra US. **(2026-06-18) Worker WhatsApp NO AR** → Feed recebendo relatórios das corretoras ao vivo (4º serviço `gorila-whatsapp`). **Falta (opcional)**: sync agendado (cron na Railway p/ B3/BDR), Resend domain, magic-link. Handoff completo: [[Deploy - Railway (Producao)]]
@@ -50,6 +56,9 @@ Semana 5+    [Sprint 07 cont. — Alerts + Paywall]
 ## Backlog (depois do MVP)
 
 - **Suitability / Perfil de Investidor no cadastro** (enriquecer o Passo 4) — questionário de 13 perguntas → Conservador/Moderado/Arrojado. Ver [[Backlog - Suitability (Passo 4 do Cadastro)]]
+- **Sync agendado** dos fundamentos (cron na Railway ou no worker) — sem ele o preço só atualiza quando alguém abre a página de uma ação
+- **Limpeza das linhas antigas de `stock_indicators`** — o churn foi estancado (update-or-create), mas prod tem ~1300 linhas históricas paradas
+- **Apertar a validação de ticker no extrator do Feed** — está criando entradas de menções soltas (`AZZAS2154`, `AUGO`, `PICS`) e consensos com contagem zero
 - Importar carteira do investidor (CSV B3, integração com corretora)
 - Backtest de estratégias
 - Notificações in-app (não só email)
@@ -57,3 +66,23 @@ Semana 5+    [Sprint 07 cont. — Alerts + Paywall]
 - Análise IA mais profunda (já tem `@anthropic-ai/sdk`)
 - Internacionalização (UserPreferences.locale já existe)
 - Compartilhamento público de watchlist/análise
+
+### Inteligência de Mercado (ideias do sócio, capturadas 2026-07-07)
+
+- **5 features de sinais a partir de dados públicos** (B3, Tesouro, CVM): Radar de Volume Anômalo, Monitor de Derivativos, Monitor de Leilões do Tesouro, Radar de Fundos (CVM), Volatilidade Implícita. Detalhe completo + prioridades em [[Backlog - Inteligencia de Mercado (ideias do socio)]].
+
+### Análise avançada (mapeado)
+
+- Adversarial Verification + Tournament (pipeline de verificação da análise IA)
+- Correlação Macro + Fundamentos
+
+### Plataforma / Negócio (mapeado)
+
+- Agregador Multi-Banco (Pluggy)
+- Academia GorilaAlpha (vídeos educativos)
+- Feed de Preços-Alvo (scraping público)
+- Chat com Relatórios (cruzamento com o score)
+- Portfólio pessoal do usuário
+- Push notifications
+- Rename da plataforma (BRX ou Verum)
+- Lançamento Beta fechado
