@@ -49,6 +49,8 @@ Desvio:         +122% acima da média
 
 **Prioridade:** 🟢 Alta — dados já públicos.
 
+> 💡 **É a mais barata das cinco, e mais do que o registro original sugeria.** Não precisa de fonte de dados nova: `StockPriceHistory.volume` (série diária) e `StockQuote.volume` (dia corrente, criado em 2026-08-07) **já estão no banco**. A média 30d e o desvio saem de query. Boa candidata a primeira implementação — serve de prova da engine de detecção de anomalia que as ideias 3 e 4 vão reusar.
+
 ---
 
 ## 2. Monitor de Derivativos — Opções com volume anômalo

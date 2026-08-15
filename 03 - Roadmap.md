@@ -41,13 +41,17 @@ Semana 5+    [Sprint 07 cont. — Alerts + Paywall]
 - [x] Sprint 3.5 — Gráfico histórico (concluído em 2026-05-21)
 - 🟢 Sprint 07 — Alerts + Paywall: 7.A/7.B/7.C OK · **7.D (Asaas) + 7.E (garantia 7d) implementados em 2026-06-09** (checkout testado no sandbox, webhook, reembolso, paywall do Feed). Falta: webhook em URL pública + reiniciar dev p/ `.env` corrigida. Ver [[Diario/2026-06-09 - Paywall Feed e Asaas]]
 - [x] Sprint 08 — Feed de Relatórios: **CONCLUÍDO end-to-end em 2026-06-08** (WhatsApp → PDF → Claude → feed funcionando; 3 PDFs reais processados). App + ConsensusWidget testados.
-- 🟢 Sprint 09 — Renda Fixa (BR + Internacional): **código completo em 2026-06-09** (BCB+FRED reais, comparador c/ IR+câmbio, calculadora, curva, advisor IA, 4 tabs). 🟡 falta validação visual + câmbio/US no app real. Tesouro Direto bloqueado (Cloudflare) → produtos via BCB.
+- 🟢 Sprint 09 — Renda Fixa (BR + Internacional): **código completo em 2026-06-09** (BCB+FRED reais, comparador c/ IR+câmbio, calculadora, curva, advisor IA, 4 tabs). 🟡 falta validação visual + câmbio/US no app real. Tesouro Direto bloqueado (Cloudflare) → produtos via BCB. **(2026-08-15) Portado para o PWA** com 5 abas (Visão, Calculadora, Comparar, Histórico, Análise IA), abas em rolagem horizontal e máscara de real. Ver [[Diario/2026-08-13 - Quality gate destravado, cron de sync e Renda Fixa no PWA]].
 
-## 🔴 Bloqueios abertos (2026-08-07)
+## 🔴 Bloqueios abertos (atualizado 2026-08-15)
 
-1. **O próximo deploy não sobe** — migration `full_text` não registrada no `_prisma_migrations` de prod (confirmado por consulta). Rodar `prisma migrate resolve --applied 20260618120144_add_report_full_text` **antes** de deployar. Ver [[Deploy - Railway (Producao)]].
-2. **Preços desatualizados em produção** — B3/BDR de 23/07, US de 17/06, servidos em silêncio via `cache-stale`. Falta **sync agendado** (pendente desde junho).
-3. **Trabalho não commitado** — 3 mudanças de cotação + ScoreRing (do `reset --soft` do commit `9519646b`, cuja mensagem não batia com o conteúdo).
+1. **O próximo deploy não sobe** — migration `full_text` não registrada no `_prisma_migrations` de prod (confirmado por consulta). Rodar `prisma migrate resolve --applied 20260618120144_add_report_full_text` **antes** de deployar. Ver [[Deploy - Railway (Producao)]]. 🔴 **ainda aberto**
+2. **Preços desatualizados em produção** — 🟡 o sync agendado **foi implementado** (`POST /api/cron/sync-stocks` + `.github/workflows/sync-stocks.yml`, a cada 30min), mas **só resolve depois do deploy**, que depende do item 1.
+3. **Trabalho não commitado** — 🔴 **cresceu.** Agora acumula duas sessões: as 3 mudanças de cotação + ScoreRing (07/08) **mais** quality gate, cron de sync, detalhe de relatório no PWA e Renda Fixa no PWA (13–15/08).
+
+## Paridade PWA ↔ Web (2026-08-15)
+
+O PWA tem Feed (home), Screener, Stock, Watchlist, Compare, Alertas, Perfil e **Renda Fixa**. Falta **Rankings** — única tela que existe no web e não no mobile. A API `/api/rankings` já está pronta: é wiring, não feature nova.
 
 ## Deploy
 
@@ -56,8 +60,11 @@ Semana 5+    [Sprint 07 cont. — Alerts + Paywall]
 ## Backlog (depois do MVP)
 
 - **Suitability / Perfil de Investidor no cadastro** (enriquecer o Passo 4) — questionário de 13 perguntas → Conservador/Moderado/Arrojado. Ver [[Backlog - Suitability (Passo 4 do Cadastro)]]
-- **Sync agendado** dos fundamentos (cron na Railway ou no worker) — sem ele o preço só atualiza quando alguém abre a página de uma ação
+- ~~**Sync agendado** dos fundamentos~~ → ✅ implementado em 2026-08-14 (rota rotativa + GitHub Actions a cada 30min). Só entra em vigor depois do deploy.
 - **Limpeza das linhas antigas de `stock_indicators`** — o churn foi estancado (update-or-create), mas prod tem ~1300 linhas históricas paradas
+- **Auditar cache envenenado nos outros services de renda fixa** — `usa`, `international` e `fx` usam o mesmo `cached()` que gravava fallback de falha como dado bom. O `brazil` foi corrigido em 2026-08-14 (zerava o IPCA por 1h e subestimava todo produto IPCA+); os outros três **não foram auditados**.
+- **Padronizar formato de erro das rotas** — as rotas devolvem `{ error: "codigo", message }` mas o `apiFetch` do `@gorila/core` espera `{ error: { code, message } }`, então o PWA sempre mostra mensagem genérica.
+- **Fila e SSE do Feed são in-process** (`globalThis` + `EventEmitter`) — só funciona com uma instância do web. Trava escala horizontal.
 - **Apertar a validação de ticker no extrator do Feed** — está criando entradas de menções soltas (`AZZAS2154`, `AUGO`, `PICS`) e consensos com contagem zero
 - Importar carteira do investidor (CSV B3, integração com corretora)
 - Backtest de estratégias
@@ -71,10 +78,10 @@ Semana 5+    [Sprint 07 cont. — Alerts + Paywall]
 
 - **5 features de sinais a partir de dados públicos** (B3, Tesouro, CVM): Radar de Volume Anômalo, Monitor de Derivativos, Monitor de Leilões do Tesouro, Radar de Fundos (CVM), Volatilidade Implícita. Detalhe completo + prioridades em [[Backlog - Inteligencia de Mercado (ideias do socio)]].
 
-### Análise avançada (mapeado)
+### Análise avançada (detalhado 2026-08-15)
 
-- Adversarial Verification + Tournament (pipeline de verificação da análise IA)
-- Correlação Macro + Fundamentos
+- **Adversarial Verification + Tournament** — Bull vs Bear vs Quant analisam em paralelo, se atacam, e um juiz sintetiza o veredito com **score de confiança 0–100** baseado em quanto a tese resistiu ao ataque cruzado. Feature Pro: multiplica tokens (~10 chamadas por ação) mas eleva a qualidade exponencialmente. Detalhe completo em [[Backlog - Adversarial Verification e Tournament]].
+- **Correlação Macro + Fundamentos** (ideia do sócio) — cruzar Selic, câmbio e commodities com o desempenho histórico por setor: *"nas últimas X vezes que o açúcar ficou abaixo de $Y, sucroenergéticas caíram Z%"*. Fontes BCB + FRED + histórico de ações, **todas já em produção** por conta da Renda Fixa. Detalhe completo em [[Backlog - Correlacao Macro e Fundamentos]].
 
 ### Plataforma / Negócio (mapeado)
 

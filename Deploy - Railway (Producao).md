@@ -66,6 +66,19 @@ Produção serve **preços de ~15 dias** (B3/BDR) e ~7 semanas (US), **em silên
 
 Mitigações implementadas (ainda **não deployadas**) no item 6 de [[Diario/2026-08-07 - Ambiente local destravado, brapi fora e cotacao separada dos fundamentos]]: cotação com caminho e TTL próprios, e idade do dado visível na tela.
 
+**(2026-08-14) O sync agendado foi implementado** — ver [[Diario/2026-08-13 - Quality gate destravado, cron de sync e Renda Fixa no PWA]]. Também **não deployado**, e depende do bloqueio acima.
+
+Ao deployar, além de destravar a migration, é preciso configurar no **GitHub** (Settings → Secrets and variables → Actions) para o workflow `sync-stocks.yml` funcionar:
+
+| Secret | Valor |
+|---|---|
+| `APP_URL` | URL pública do serviço web na Railway |
+| `CRON_SECRET` | o mesmo valor já setado nas env vars do web |
+
+> São os mesmos secrets que o `check-alerts.yml` já usa. Se ele estiver funcionando, já existem.
+
+**Migration nova na fila:** `20260807195143_add_stock_quote` (aditiva — cria `stock_quotes`, índice único em `stock_id`, índice em `fetched_at` e a FK). Ela está **atrás** da `full_text` na fila, então só aplica depois do `migrate resolve`.
+
 ### ⚠️ Segurança — rotacionar credencial do Postgres
 A `DATABASE_PUBLIC_URL` de produção circulou em texto plano em 2026-08-07. Considerar rotacionar em Railway → Postgres → Variables.
 

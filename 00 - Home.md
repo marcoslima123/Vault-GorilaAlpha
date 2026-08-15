@@ -18,6 +18,13 @@ Vault Obsidian para mapear o progresso do projeto **GorilaAlpha** (web app de an
 - [[Sprints/Sprint 06 - Compare]]
 - [[Sprints/Sprint 07 - Alerts e Paywall]]
 
+## Backlog detalhado
+
+- [[Backlog - Inteligencia de Mercado (ideias do socio)]] — 5 features de sinais a partir de dados públicos (B3, Tesouro, CVM)
+- [[Backlog - Adversarial Verification e Tournament]] — multi-agente Bull/Bear/Quant + juiz, com score de confiança 0–100
+- [[Backlog - Correlacao Macro e Fundamentos]] — macro (Selic, câmbio, commodities) × desempenho histórico por setor
+- [[Backlog - Suitability (Passo 4 do Cadastro)]] — questionário de perfil de investidor no cadastro
+
 ## Decisões
 
 - [[Decisoes/2026-05-20 - Modelo de Monetizacao]] — híbrido (free + pro), **R$ 34,90/mês ou R$ 299/ano**, Asaas como provedor, garantia 7d (sem trial)
@@ -50,6 +57,7 @@ Vault Obsidian para mapear o progresso do projeto **GorilaAlpha** (web app de an
 - [[Diario/2026-06-18 - Worker WhatsApp em producao (Feed ao vivo)]]
 - [[Diario/2026-06-19 - Watchdog WhatsApp, incidente full_text e skeletons]]
 - [[Diario/2026-08-07 - Ambiente local destravado, brapi fora e cotacao separada dos fundamentos]] ⚠️ **pendência que trava o próximo deploy**
+- [[Diario/2026-08-13 - Quality gate destravado, cron de sync e Renda Fixa no PWA]] ⚠️ **pendência do deploy continua aberta**
 
 ## Localização do código
 
@@ -59,7 +67,8 @@ Monorepo pnpm + Turborepo:
 - `apps/web` — Next.js 16.2.2 (porta 3000)
 - `apps/pwa` — Next.js 16.2.2 (porta 3001)
 - `packages/config` — config compartilhada
-- `packages/ui` — design system
+- `packages/ui` — design system (componentes, ícones, tokens)
+- `packages/core` — client HTTP, sessão e tipos consumidos pelo PWA
 
 Stack: Next.js 16 + React 19 + Prisma 5 + Postgres 16 + pnpm 10 + Turborepo 2.
 
@@ -87,3 +96,13 @@ docker compose up -d
 > Detalhe do diagnóstico completo em [[Diario/2026-08-07 - Ambiente local destravado, brapi fora e cotacao separada dos fundamentos]].
 
 > Se o banco local estiver atrás do schema, rodar `npx prisma migrate deploy` dentro do container (`apps/web`).
+
+## Verificação antes de entregar
+
+```powershell
+docker compose exec -T app sh -c 'cd /app && pnpm gate'
+```
+
+`pnpm gate` roda prisma generate, type-check dos 4 workspaces, eslint, dependency-cruiser (fronteiras web↔pwa↔packages), auditoria do `globalEnv` do Turbo e checagem de scoring duplicado. Substitui o antigo `pnpm lint` + `pnpm type-check`. O projeto **não tem framework de testes**.
+
+> ⚠️ Type-check quebrando com erro de sintaxe em `.next/dev/types/routes.d.ts`? É escrita parcial do dev server, não código nosso. Apagar o arquivo e reiniciar o container.
