@@ -59,6 +59,7 @@ Vault Obsidian para mapear o progresso do projeto **GorilaAlpha** (web app de an
 - [[Diario/2026-06-19 - Watchdog WhatsApp, incidente full_text e skeletons]]
 - [[Diario/2026-08-07 - Ambiente local destravado, brapi fora e cotacao separada dos fundamentos]] ⚠️ **pendência que trava o próximo deploy**
 - [[Diario/2026-08-13 - Quality gate destravado, cron de sync e Renda Fixa no PWA]] ⚠️ **pendência do deploy continua aberta**
+- [[Diario/2026-08-16 - Hardening de API, contrato de erro unificado e cache envenenado]] ⚠️ **migration 0.1 vira runbook; ainda não executada em prod**
 
 ## Localização do código
 
@@ -104,6 +105,10 @@ docker compose up -d
 docker compose exec -T app sh -c 'cd /app && pnpm gate'
 ```
 
-`pnpm gate` roda prisma generate, type-check dos 4 workspaces, eslint, dependency-cruiser (fronteiras web↔pwa↔packages), auditoria do `globalEnv` do Turbo e checagem de scoring duplicado. Substitui o antigo `pnpm lint` + `pnpm type-check`. O projeto **não tem framework de testes**.
+`pnpm gate` roda prisma generate, type-check dos 4 workspaces, eslint, dependency-cruiser (fronteiras web↔pwa↔packages), auditoria do `globalEnv` do Turbo e checagem de scoring duplicado. Substitui o antigo `pnpm lint` + `pnpm type-check`.
+
+> ⚠️ Exige **Node >= 22** — o `dependency-cruiser` roda em `^22||^24||>=26`. Em Node 20 as 3 etapas de fronteira falham e o gate dá FAIL mesmo com type-check e eslint limpos.
+
+> O projeto **tem** vitest (`pnpm --filter @gorila/web test`) e 6 arquivos de teste, além de Stryker. O `CLAUDE.md` afirma o contrário e está desatualizado.
 
 > ⚠️ Type-check quebrando com erro de sintaxe em `.next/dev/types/routes.d.ts`? É escrita parcial do dev server, não código nosso. Apagar o arquivo e reiniciar o container.
