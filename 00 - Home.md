@@ -4,6 +4,7 @@ Vault Obsidian para mapear o progresso do projeto **GorilaAlpha** (web app de an
 
 ## Mapas principais
 
+- [[Levantamento Tecnico e de Produto (2026-08-15)]] — **levantamento completo** por leitura do código: stack, todas as features, integrações, schema, planos, gaps, métricas e mapa de rotas
 - [[01 - Estado Atual]] — snapshot do que existe hoje (rotas, auth, schema, APIs, UI)
 - [[02 - Proximos Passos]] — recomendação priorizada
 - [[03 - Roadmap]] — sprints planejados
