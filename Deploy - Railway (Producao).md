@@ -28,7 +28,156 @@
 - Cada commit redeploya os serviços do mesmo repo. **Mudança no `apps/pwa` → confirmar no serviço `gorila-mobile`** (não no web). Ex: o fix do gráfico (`7edc156`) é PWA.
 - ⚠️ **Worker WhatsApp pode ficar surdo (zombie socket)** — mitigado com watchdog (2026-06-19, commit `cba38c5`); se mesmo assim parar, redeploya o `gorila-whatsapp`. Guarda `WHATSAPP_MAX_PDF_MB` (default 20MB) pula jornais gigantes.
 
-### 🔴 BLOQUEIO CONFIRMADO — o próximo deploy NÃO vai subir (verificado em 2026-08-07)
+### 🚨 2026-08-18 — o `migrate deploy` do boot NÃO rodou no deploy
+
+**O deploy subiu com o código novo, mas sem aplicar as migrations.** Verificado logo após o push:
+
+| Checagem | Resultado |
+|---|---|
+| App no ar | 200 em `/`, `/api/ping`, `/planos` |
+| Código novo presente | rotas de 13, 17 e 18/08 respondem 401 (existem e estão guardadas) |
+| `stock_quotes`, `compare_analyses`, `ranking_insights`, `cache_entries` | **NENHUMA existia** |
+| Última migration registrada | ainda a de 17/08 |
+
+Ou seja: **o build é novo, mas o passo de migration não executou.** O `CMD` do `Dockerfile` está correto:
+
+```dockerfile
+CMD pnpm --filter @gorila/web exec prisma migrate deploy && cd apps/web && pnpm exec next start --hostname 0.0.0.0 --port ${PORT:-3000}
+```
+
+Se o `migrate deploy` tivesse rodado e falhado, o `&&` impediria o `next start` e o app estaria fora — mas ele responde. A explicação que sobra é um **Start Command customizado nas configurações do serviço na Railway**, que sobrescreve o `CMD` do Dockerfile e pula a migration.
+
+⚠️ **Risco real enquanto não for conferido:** o código em produção referencia tabelas que podem não existir. Qualquer usuário logado abrindo uma ação chama `getQuote()` → `stock.quote`; a renda fixa chama `cache_entries`.
+
+**Resolvido na mão em 2026-08-18** — Marcos rodou o `migrate deploy` apontando para o banco de produção. As 4 aplicaram na sequência, sem erro. Depois: 24 tabelas, nenhuma migration com `finished_at NULL`, 680 stocks e 150 reports preservados.
+
+### ✅ RESOLVIDO 2026-08-20 — os deploys estavam sendo SKIPPED pelo Watch Paths
+
+**Status: resolvido.** Marcos apagou o campo Watch Paths e o deploy saiu. Confirmado em produção:
+
+| Verificação | Resultado |
+|---|---|
+| `prisma migrate status` | **Database schema is up to date!** (18/18) |
+| `fixed_income_cache` | **removida sozinha no boot** |
+| `cache_entries`, `stock_quotes`, `ranking_insights`, `compare_analyses` | todas presentes |
+| Dados | 680 stocks · 150 reports, intactos |
+| `/api/market/ticker-tape` | 200, 12 cotações reais |
+| `/api/signals/volume` e `/api/cron/backfill-history` | 401 (existem e guardadas) |
+
+> 🎯 **Esse deploy foi o primeiro teste real do `start:railway` corrigido com migration pendente** — e a `drop_fixed_income_cache` aplicou sozinha no boot, sem intervenção. O ciclo de deploy está fechado de ponta a ponta.
+
+#### O diagnóstico
+
+Depois de corrigir o Start Command, 14 commits foram pushados para `origin/dev` e **nenhum deploy saiu**. A aba Deployments mostrava histórico de **"skipped"**.
+
+A Railway marca como *skipped* quando o push não casa com o **Watch Paths** do serviço. O web estava com:
+
+```
+/apps/web/**
+```
+
+**Com barra no início.** A sintaxe é estilo gitignore e a barra impedia o casamento, fazendo **todo push ser descartado antes de buildar**. Por isso os deploys de 18 e 19/08 precisaram ser manuais.
+
+🔧 **Correção: apagar o campo Watch Paths** (serviço web → Settings → Build).
+
+Num monorepo isso não é só sintaxe: o web depende de `packages/core` e `packages/ui` via `transpilePackages`, mais `pnpm-lock.yaml` e `Dockerfile`. Mesmo com a sintaxe certa, `apps/web/**` sozinho **não deployaria** mudança em `packages/core` — que entra no bundle do web.
+
+Se alguém quiser o filtro de volta, o conjunto mínimo correto é:
+
+```
+apps/web/**
+packages/**
+pnpm-lock.yaml
+Dockerfile
+```
+
+### O que essa caçada custou, para não repetir
+
+O sintoma (deploy não sai) tem quatro causas possíveis nesta stack, e vale checar **nesta ordem**, da mais barata para a mais cara:
+
+| # | Checar | Onde |
+|---|---|---|
+| 1 | Deploy foi **skipped**? | aba Deployments → Watch Paths |
+| 2 | **Start Command** roda a migration? | Settings → Deploy (`start:railway`, não `start`) |
+| 3 | **Wait for CI** com workflow vermelho? | aba Actions |
+| 4 | Build quebrado de verdade? | `docker build -f Dockerfile .` local |
+
+> ⚠️ **O passo 4 só vale no Docker.** Rodar `pnpm build` no container de dev deu falso positivo de build quebrado por mais de uma hora, porque o `node_modules` do volume anônimo estava velho (tinha `lucide-react`, removido dias antes). O `docker build` faz `pnpm install` limpo e é a única prova confiável.
+
+### Outras duas coisas vistas no painel do web
+
+- **Custom Build Command** está preenchido com `pnpm --filter @gorila/web build`, mas o builder é Dockerfile e os logs mostram os passos do Dockerfile rodando — ou seja, o campo está sendo ignorado. Vale esvaziar: se a Railway passar a honrá-lo, roda sem `pnpm install` antes e o build quebra.
+- **Healthcheck Path** vazio. Preencher com `/api/ping` faz a Railway validar o container novo antes de cortar o tráfego.
+
+---
+
+### ✅ CORRIGIDO em 2026-08-18 — Start Command chamava o script errado
+
+**Status: resolvido.** Marcos trocou o Start Command para `pnpm --filter @gorila/web start:railway` e redeployou. Produção no ar, `prisma migrate status` → **"Database schema is up to date!"** (17/17).
+
+> ⚠️ A troca do campo está feita, mas o mecanismo **ainda não foi exercitado**: não havia migration pendente no redeploy (as 4 já tinham sido aplicadas à mão). A prova real vem no próximo deploy que carregar uma migration nova.
+
+#### O diagnóstico
+
+O painel da Railway (serviço web → Settings → Deploy) tem **Custom Start Command** preenchido com:
+
+```
+pnpm --filter @gorila/web start
+```
+
+E os scripts do `apps/web/package.json` são:
+
+| Script | Comando | Roda migration? |
+|---|---|---|
+| `start` | `next start` | ❌ |
+| `start:railway` | `prisma migrate deploy && next start` | ✅ |
+
+O Start Command **sobrescreve o `CMD` do Dockerfile** e chama o script **sem** a migration. O `start:railway` foi criado exatamente para esse papel e **nunca esteve em uso**.
+
+🔧 **Correção — trocar o Start Command para:**
+
+```
+pnpm --filter @gorila/web start:railway
+```
+
+> Alternativa: **apagar** o campo, deixando o `CMD` do Dockerfile assumir (ele já faz `migrate deploy` e ainda passa `--hostname 0.0.0.0 --port`). Preferir o `start:railway` mantém a intenção visível no painel; o `HOSTNAME` e o `PORT` vêm das `ENV` do Dockerfile, que o `next start` lê.
+
+### Outras duas coisas vistas no mesmo painel
+
+- **Healthcheck Path está vazio.** Preencher com `/api/ping` faz a Railway validar que o deploy novo responde **antes** de cortar o tráfego. Não teria pego este incidente (o app subia), mas pega deploy quebrado.
+- ⚠️ **Serverless (scale to zero)** — **precisa estar DESLIGADO** neste serviço. A fila de relatórios (`lib/report-queue.ts`) e o emissor do SSE (`lib/report-events.ts`) vivem em `globalThis`, no processo. Se o container dormir, a fila em memória e os listeners do Feed morrem. Foi por isso que a Railway foi escolhida em 2026-06-10 — "container always-on → real-time/SSE funciona igual ao local".
+
+---
+
+### ✅ RESOLVIDO em 2026-08-17 — o bloqueio do deploy acabou
+
+O `prisma migrate resolve --applied 20260618120144_add_report_full_text` **foi executado contra o banco de produção em 2026-08-17**. Diagnóstico read-only antes da escrita:
+
+| Checagem | Resultado |
+|---|---|
+| `reports.full_text` | **EXISTE** (`text`) — coluna criada na mão em junho |
+| Migration registrada em `_prisma_migrations` | **não estava** → drift confirmado |
+| `stock_quotes` (tabela) | **NÃO EXISTE** → migration aplica limpo, não precisou de `resolve` |
+| Migrations com `finished_at NULL` | **nenhuma** → a fila estava limpa, só faltavam registros |
+| Volume em prod | 150 reports · 680 stocks |
+
+**Estado após o conserto** (`prisma migrate status`):
+
+```
+14 migrations found in prisma/migrations
+Following migration have not yet been applied:
+20260807195143_add_stock_quote
+```
+
+Só a `add_stock_quote` está pendente, e o `start:railway` roda `prisma migrate deploy && next start` — então **o próximo deploy aplica sozinho e sobe**. Não é preciso rodar nada à mão.
+
+> O `migrate deploy` manual foi bloqueado pelo classificador de permissões do Claude Code (aplicar schema em prod é ação de risco). Não foi necessário: o boot do serviço faz isso.
+
+Detalhe em [[Diario/2026-08-17 - Validacao de ticker pela B3, limpeza aplicada e lucide removido]].
+
+---
+
+### 🔴 Histórico do bloqueio (verificado em 2026-08-07, resolvido em 17/08)
 
 A migration `20260618120144_add_report_full_text` **não está registrada** em `_prisma_migrations`. Consulta rodada contra o banco de prod em 2026-08-07:
 
@@ -79,8 +228,16 @@ Ao deployar, além de destravar a migration, é preciso configurar no **GitHub**
 
 **Migration nova na fila:** `20260807195143_add_stock_quote` (aditiva — cria `stock_quotes`, índice único em `stock_id`, índice em `fetched_at` e a FK). Ela está **atrás** da `full_text` na fila, então só aplica depois do `migrate resolve`.
 
-### ⚠️ Segurança — rotacionar credencial do Postgres
-A `DATABASE_PUBLIC_URL` de produção circulou em texto plano em 2026-08-07. Considerar rotacionar em Railway → Postgres → Variables.
+### ⚠️ Segurança — credenciais expostas (decisão de 2026-08-18: adiado)
+
+Duas credenciais circularam em texto plano:
+
+1. **`DATABASE_PUBLIC_URL` do Postgres de produção** — usada várias vezes no chat desde 2026-08-07.
+2. **`RESEND_API_KEY`** — commitada no arquivo versionado `.env.example:21`.
+
+🟡 **Decisão do Marcos em 2026-08-18: rotacionar só quando outras pessoas forem mexer no projeto.** Enquanto o acesso é só dele, o risco é aceito conscientemente.
+
+**Gatilho para executar:** antes de dar acesso ao repositório ou ao painel da Railway para qualquer outra pessoa. A da Resend exige também tirar a chave do `.env.example` (o histórico do git mantém a antiga).
 
 ---
 

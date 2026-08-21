@@ -60,6 +60,10 @@ Vault Obsidian para mapear o progresso do projeto **GorilaAlpha** (web app de an
 - [[Diario/2026-08-07 - Ambiente local destravado, brapi fora e cotacao separada dos fundamentos]] ⚠️ **pendência que trava o próximo deploy**
 - [[Diario/2026-08-13 - Quality gate destravado, cron de sync e Renda Fixa no PWA]] ⚠️ **pendência do deploy continua aberta**
 - [[Diario/2026-08-16 - Hardening de API, contrato de erro unificado e cache envenenado]] ⚠️ **migration 0.1 vira runbook; ainda não executada em prod**
+- [[Diario/2026-08-17 - Validacao de ticker pela B3, limpeza aplicada e lucide removido]] — gate PASS em Node 22 · regra #2 do CLAUDE.md fechada · ⚠️ **0.1 continua o único bloqueador do deploy**
+- [[Diario/2026-08-18 - IA no Ranking e arquitetura de cache]] — IA no pódio dos Rankings · **arquitetura de cache que obriga classificar o resultado**
+- [[Diario/2026-08-19 - Radar de Volume Anomalo e os letreiros]] — 1ª das 5 ideias do sócio entregue · churn de escrita 2500x corrigido
+- [[Diario/2026-08-20 a 21 - Deploy destravado, incidente de disco e Monitor de Derivativos]] — ✅ **deploy automático voltou** · coletor de opções rodando
 
 ## Localização do código
 
@@ -109,6 +113,6 @@ docker compose exec -T app sh -c 'cd /app && pnpm gate'
 
 > ⚠️ Exige **Node >= 22** — o `dependency-cruiser` roda em `^22||^24||>=26`. Em Node 20 as 3 etapas de fronteira falham e o gate dá FAIL mesmo com type-check e eslint limpos.
 
-> O projeto **tem** vitest (`pnpm --filter @gorila/web test`) e 6 arquivos de teste, além de Stryker. O `CLAUDE.md` afirma o contrário e está desatualizado.
+> O projeto **tem** vitest (`pnpm --filter @gorila/web test`) e 6 arquivos de teste, além de Stryker. O `CLAUDE.md` afirmava o contrário; corrigido em 2026-08-17.
 
 > ⚠️ Type-check quebrando com erro de sintaxe em `.next/dev/types/routes.d.ts`? É escrita parcial do dev server, não código nosso. Apagar o arquivo e reiniciar o container.

@@ -154,6 +154,56 @@ Gap grande entre as duas → mercado precificando evento
 
 ---
 
+## 🆕 2026-08-19 — conversa com o Edmar e descoberta técnica
+
+### O que o Edmar acrescentou
+
+> *"Tem muito player de mercado que se entrar no mercado à vista, ele faz muito preço. Então normalmente tem player que entra via derivativo porque é mais 'escondido'."*
+
+Esse é o **porquê** do Monitor de Derivativos, que faltava no registro original. Não é só "alavanca mais": quem tem tamanho **não consegue** comprar à vista sem mover o preço contra si. O derivativo é onde dá pra montar posição sem denunciar.
+
+Outros três pontos:
+
+1. **Janelas de 30/60/90 dias**, não só 30. Barato de fazer e dá contexto (2x sobre 30d pode ser normal se 90d já vinha subindo).
+2. **Não tentar inferir a estratégia.** Ele diz que a parte difícil do derivativo é trazer contexto pra leigo — saber se é trava de alta, compra seca de call etc. **Isso reforça o princípio da nota:** sinalizar o fato (delta de volume), nunca interpretar a operação. Tentar adivinhar a estratégia seria dar conselho disfarçado.
+3. **Volume anômalo de derivativo + volatilidade implícita baixa = o sinal mais forte.** Se a VI está muito baixa e o volume de derivativos dispara, a chance da VI subir é alta. **Isso funde as ideias #2 e #5 num sinal só**, em vez de duas features separadas.
+
+### 🔓 Descoberta: a brapi PRO tem chain de opções
+
+A ideia #2 estava marcada 🟡 média **porque dependia de "acesso ao book de opções"**. Esse bloqueio não existe — testado em 2026-08-19 com o token PRO que já pagamos:
+
+```
+GET /api/v2/options/expirations?underlying=PETR4
+  -> 20+ vencimentos, com tradedOnly
+
+GET /api/v2/options/chain?underlying=PETR4&expirationDate=2026-08-21
+  -> 253 contratos
+```
+
+Campos por contrato:
+
+```
+symbol, underlyingSymbol, side (call|put), market, optionStyle,
+strike, expirationDate, firstTradeDate, lastTradeDate,
+open, high, low, average, close, bid, ask,
+trades, volume, financialVolume
+```
+
+**Custo de armazenamento é baixo** se guardarmos o agregado: o sinal precisa do volume financeiro **somado por ativo por dia**, não de cada contrato. Isso é 1 linha por ação por dia. O custo real é de chamadas (1 por vencimento), mas o volume concentra nos 2–3 vencimentos mais próximos.
+
+### ⚠️ O que a chain NÃO traz: volatilidade implícita
+
+Não há campo de VI. Teríamos que calcular (Black-Scholes) a partir de strike, vencimento, preço da opção e preço do ativo — todos presentes — mais a **taxa livre de risco**.
+
+> 💡 E a taxa livre de risco **já temos**: a Selic vem do BCB pelo módulo de [[Diario/2026-06-09 - Modulo Renda Fixa]]. A ideia #5 deixa de depender de fonte externa nova.
+
+### Impacto na priorização
+
+| Ideia | Antes | Agora |
+|---|---|---|
+| #2 Monitor de Derivativos | 🟡 média (dependia do book) | 🟢 **alta** — dado disponível na brapi PRO |
+| #5 Volatilidade Implícita | 🟡 média (calculado das opções) | 🟡 média, mas **sem bloqueio de fonte** — falta só o cálculo |
+
 ## Prioridade recomendada
 
 | # | Ideia | Fonte de dados | Prioridade |

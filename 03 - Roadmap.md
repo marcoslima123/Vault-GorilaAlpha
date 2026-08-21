@@ -43,15 +43,41 @@ Semana 5+    [Sprint 07 cont. — Alerts + Paywall]
 - [x] Sprint 08 — Feed de Relatórios: **CONCLUÍDO end-to-end em 2026-06-08** (WhatsApp → PDF → Claude → feed funcionando; 3 PDFs reais processados). App + ConsensusWidget testados.
 - 🟢 Sprint 09 — Renda Fixa (BR + Internacional): **código completo em 2026-06-09** (BCB+FRED reais, comparador c/ IR+câmbio, calculadora, curva, advisor IA, 4 tabs). 🟡 falta validação visual + câmbio/US no app real. Tesouro Direto bloqueado (Cloudflare) → produtos via BCB. **(2026-08-15) Portado para o PWA** com 5 abas (Visão, Calculadora, Comparar, Histórico, Análise IA), abas em rolagem horizontal e máscara de real. Ver [[Diario/2026-08-13 - Quality gate destravado, cron de sync e Renda Fixa no PWA]].
 
-## 🔴 Bloqueios abertos (atualizado 2026-08-15)
+## ✅ Bloqueios de deploy — todos resolvidos (2026-08-21)
 
-1. **O próximo deploy não sobe** — migration `full_text` não registrada no `_prisma_migrations` de prod (confirmado por consulta). Rodar `prisma migrate resolve --applied 20260618120144_add_report_full_text` **antes** de deployar. Ver [[Deploy - Railway (Producao)]]. 🔴 **ainda aberto**
-2. **Preços desatualizados em produção** — 🟡 o sync agendado **foi implementado** (`POST /api/cron/sync-stocks` + `.github/workflows/sync-stocks.yml`, a cada 30min), mas **só resolve depois do deploy**, que depende do item 1.
-3. **Trabalho não commitado** — 🔴 **cresceu.** Agora acumula duas sessões: as 3 mudanças de cotação + ScoreRing (07/08) **mais** quality gate, cron de sync, detalhe de relatório no PWA e Renda Fixa no PWA (13–15/08).
+1. ~~Migration `full_text` travando o boot~~ → resolvida em 17/08.
+2. ~~Start Command chamando `start` em vez de `start:railway`~~ → corrigido em 18/08.
+3. ~~Watch Paths descartando todo push como *skipped*~~ → **campo apagado em 20/08**. Era a causa real de nenhum deploy sair.
+4. ~~Limpeza de tickers órfãos em produção~~ → aplicada em 18/08.
 
-## Paridade PWA ↔ Web (2026-08-15)
+> 🎯 O deploy de 20/08 foi o **primeiro com migration pendente desde as correções**, e a `drop_fixed_income_cache` aplicou sozinha no boot. Ciclo fechado de ponta a ponta. Detalhe e checklist de diagnóstico em [[Deploy - Railway (Producao)]].
 
-O PWA tem Feed (home), Screener, Stock, Watchlist, Compare, Alertas, Perfil e **Renda Fixa**. Falta **Rankings** — única tela que existe no web e não no mobile. A API `/api/rankings` já está pronta: é wiring, não feature nova.
+### Ainda em aberto
+
+- 🟡 **Credenciais expostas** — rotação adiada por decisão. Gatilho: antes de dar acesso a outra pessoa.
+- 🔧 **VHDX do Docker com 56 GB reservados** — compactar exige PowerShell como administrador.
+- 🔧 `Custom Build Command` da Railway está preenchido e sendo ignorado; quebra o build se um dia for honrado.
+
+## ✅ Padrão recorrente RESOLVIDO: cache que gravava falha como dado bom
+
+**Quatro ocorrências da mesma classe de bug**, em quatro sessões seguidas:
+
+| Data | Onde | O que era cacheado |
+|---|---|---|
+| 14/08 | `fixed-income/brazil.service.ts` | `ipca12m ?? 0` por 1h → subestimava todo produto IPCA+ |
+| 16/08 | `usa`, `international`, `fx`, `history` services | listas vazias **e parciais** por 1h–6h |
+| 17/08 | `providers/tickerList.ts` | `[]` por 24h → rebaixaria todo relatório entrante |
+| 18/08 | `technical-insights` | `touchCount: 0` sem histórico suficiente, por 24h |
+
+✅ **Resolvido na raiz em 2026-08-18** com `lib/cache.ts`. O fetcher passa a retornar `FetchOutcome<T>` (`fresh` · `degraded` · `failed`) em vez de `T` cru — **gravar sem classificar não compila**. O helper `byCoverage` trata resposta parcial, e a tabela `cache_entries` guarda `status`, `source`, `coverage` e `retryAfter`. Detalhe em [[Diario/2026-08-18 - IA no Ranking e arquitetura de cache]].
+
+**Ainda pendente:** levar `status`/`stale` até a tela da renda fixa (a cotação já faz isso com `priceStale`), e dar `DROP` na tabela `fixed_income_cache`, que ficou órfã.
+
+## Paridade PWA ↔ Web (atualizado 2026-08-18)
+
+O PWA tem Feed (home), Screener, Stock, Watchlist, Compare, Alertas, Perfil e **Renda Fixa**. Falta **Rankings** — única tela que existe no web e não no mobile, e que agora também tem a justificativa por IA no pódio.
+
+🟡 **Decisão de 2026-08-18:** entra quando o Marcos ajustar os menus do app. Não é pendência técnica — a API `/api/rankings` já está pronta.
 
 ## Deploy
 
@@ -62,10 +88,11 @@ O PWA tem Feed (home), Screener, Stock, Watchlist, Compare, Alertas, Perfil e **
 - **Suitability / Perfil de Investidor no cadastro** (enriquecer o Passo 4) — questionário de 13 perguntas → Conservador/Moderado/Arrojado. Ver [[Backlog - Suitability (Passo 4 do Cadastro)]]
 - ~~**Sync agendado** dos fundamentos~~ → ✅ implementado em 2026-08-14 (rota rotativa + GitHub Actions a cada 30min). Só entra em vigor depois do deploy.
 - **Limpeza das linhas antigas de `stock_indicators`** — o churn foi estancado (update-or-create), mas prod tem ~1300 linhas históricas paradas
-- **Auditar cache envenenado nos outros services de renda fixa** — `usa`, `international` e `fx` usam o mesmo `cached()` que gravava fallback de falha como dado bom. O `brazil` foi corrigido em 2026-08-14 (zerava o IPCA por 1h e subestimava todo produto IPCA+); os outros três **não foram auditados**.
-- **Padronizar formato de erro das rotas** — as rotas devolvem `{ error: "codigo", message }` mas o `apiFetch` do `@gorila/core` espera `{ error: { code, message } }`, então o PWA sempre mostra mensagem genérica.
+- ~~**Auditar cache envenenado nos services de renda fixa**~~ → ✅ os 4 restantes (`usa`, `international`, `fx`, `history`) auditados em 2026-08-16. A varredura do resto do código foi feita em 18/08 (achou `technical-insights`) e o padrão foi resolvido na raiz. Ver acima.
+- ~~**Padronizar formato de erro das rotas**~~ → ✅ feito em 2026-08-16: `ApiErrorCode` de 7 → 27 códigos, 31 rotas e 97 chamadas de `jsonError`. Zero `NextResponse.json({ error: … })` solto no `app/api`.
+- ~~**Apertar a validação de ticker no extrator do Feed**~~ → ✅ feito em 16/08 e **corrigido em 17/08** — validava contra a tabela `stocks` e rebaixava relatórios de empresas reais não sincronizadas. Agora valida contra a lista da B3, com fail open.
 - **Fila e SSE do Feed são in-process** (`globalThis` + `EventEmitter`) — só funciona com uma instância do web. Trava escala horizontal.
-- **Apertar a validação de ticker no extrator do Feed** — está criando entradas de menções soltas (`AZZAS2154`, `AUGO`, `PICS`) e consensos com contagem zero
+- 🔴 **Rotacionar credenciais expostas** — `RESEND_API_KEY` commitada em `.env.example:21` e a URL do Postgres de prod, que já circulou em texto plano várias vezes.
 - Importar carteira do investidor (CSV B3, integração com corretora)
 - Backtest de estratégias
 - Notificações in-app (não só email)
@@ -76,9 +103,17 @@ O PWA tem Feed (home), Screener, Stock, Watchlist, Compare, Alertas, Perfil e **
 
 ### Inteligência de Mercado (ideias do sócio, capturadas 2026-07-07)
 
-- **5 features de sinais a partir de dados públicos** (B3, Tesouro, CVM): Radar de Volume Anômalo, Monitor de Derivativos, Monitor de Leilões do Tesouro, Radar de Fundos (CVM), Volatilidade Implícita. Detalhe completo + prioridades em [[Backlog - Inteligencia de Mercado (ideias do socio)]].
+- ✅ **Radar de Volume Anômalo** — entregue em 2026-08-19. Letreiro no topo da área logada, compara 30/60/90 dias, gate por plano.
+- 🟢 **Monitor de Derivativos** — fases 1 e 2 entregues em 20–21/08 (coletor diário + painel na página da ação). **Fase 3 (o sinal de anomalia) depende só de tempo:** a chain da brapi não tem histórico, então a série é acumulada um pregão por vez. Coleta começou em 20/08; média de 30 dias por volta de **outubro**.
+- 🟢 **Monitor de Leilões do Tesouro** — não iniciado, fonte pública disponível.
+- 🟢 **Radar de Fundos (CVM)** — não iniciado, dados abertos disponíveis.
+- 🟡 **Volatilidade Implícita** — sem bloqueio de fonte: a chain traz strike, vencimento e preço, e a Selic vem do módulo de Renda Fixa. Falta o cálculo (Black-Scholes).
+
+Detalhe completo em [[Backlog - Inteligencia de Mercado (ideias do socio)]].
 
 ### Análise avançada (detalhado 2026-08-15)
+
+- ✅ **Análise comparativa por IA no Comparador** — entregue em 2026-08-17 (web + PWA, feature Pro). Cruza fundamentos + consenso de corretoras de 2–4 ativos e descreve perfil de tese, se são concorrentes ou complementares, e os trade-offs. Cache de 7 dias com chave normalizada por ordem. É um **primeiro passo na direção do Tournament** abaixo: mesma família de "IA que compara teses", só sem o pipeline adversarial.
 
 - **Adversarial Verification + Tournament** — Bull vs Bear vs Quant analisam em paralelo, se atacam, e um juiz sintetiza o veredito com **score de confiança 0–100** baseado em quanto a tese resistiu ao ataque cruzado. Feature Pro: multiplica tokens (~10 chamadas por ação) mas eleva a qualidade exponencialmente. Detalhe completo em [[Backlog - Adversarial Verification e Tournament]].
 - **Correlação Macro + Fundamentos** (ideia do sócio) — cruzar Selic, câmbio e commodities com o desempenho histórico por setor: *"nas últimas X vezes que o açúcar ficou abaixo de $Y, sucroenergéticas caíram Z%"*. Fontes BCB + FRED + histórico de ações, **todas já em produção** por conta da Renda Fixa. Detalhe completo em [[Backlog - Correlacao Macro e Fundamentos]].
